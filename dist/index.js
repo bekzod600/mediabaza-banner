@@ -6,13 +6,10 @@ import { curGrad2, curGrad, curGrad3 } from "./gradientFormatter.js";
 import { getDayIcon, getNightIcon } from "./weatherIcons.js";
 var currencyApi = "https://cbu.uz/ru/arkhiv-kursov-valyut/json/";
 var AQIApi = "https://media.leetcode.uz/api/info/aqi/";
-var newsApi = "https://www.gazeta.uz/ru/rss/";
-var trafficApi = "https://media.leetcode.uz/api/info/yandex/";
+var newsApi = "https://billboard.mediabaza.uz/api/info/rss/";
 var currencyWrapper = document.querySelector("#currencyWrapper");
-var aqiWrapper = document.querySelector("#aqi");
-var HumidityWrapper = document.querySelector("#humidity");
-var trafficWrapper = document.querySelector("#traffic");
 var weatherTempWrapper = document.querySelector(".right-wrapper #weatherTemp");
+var newsContent = document.querySelector(".news-content");
 
 // =========== helpers =================================
 var formatNumber = function formatNumber(number) {
@@ -27,28 +24,19 @@ var currencyData = function currencyData(currencies) {
   });
   return HTML;
 };
-var aqiData = function aqiData(aqi) {
-  return "\n    <div class=\"aqi-card\">\n      <div class=\"aqi-gradient\" style=\"background-image: linear-gradient(to right, ".concat(curGrad2(aqi / 2, 1), ", ").concat(curGrad2(aqi / 2, 0.7), ")\">\n        <p class=\"aqi-value\">").concat(aqi, "</p>\n      </div>\n      <p class=\"aqi-label\">\u041A\u0430\u0447\u0435\u0441\u0442\u0432\u043E <br /> \u0432\u043E\u0437\u0434\u0443\u0445\u0430</p>\n    </div>");
-};
-var humidityData = function humidityData(humidity) {
-  return "\n    <div class=\"humidity-card\">\n      <div class=\"humidity-gradient\" style=\"background-image: linear-gradient(to right, ".concat(curGrad(humidity, 1), ", ").concat(curGrad(humidity, 0.7), ")\">\n        <p class=\"humidity-value\">").concat(humidity, "%</p>\n      </div>\n      <p class=\"humidity-label\">\u0412\u043B\u0430\u0436\u043D\u043E\u0441\u0442\u044C <br /> \u0432\u043E\u0437\u0434\u0443\u0445\u0430</p>\n    </div>");
-};
-var trafficData = function trafficData(traffic) {
-  return "\n    <div class=\"traffic-card\">\n      <div class=\"traffic-gradient\" style=\"background-image: linear-gradient(to right, ".concat(curGrad3(traffic * 10, 1), ", ").concat(curGrad3(traffic * 10, 0.7), ")\">\n        <p class=\"traffic-value\">").concat(traffic, "</p>\n      </div>\n      <p class=\"traffic-label\">\u041F\u0440\u043E\u0431\u043A\u0438 \u043D\u0430 <br /> \u0434\u043E\u0440\u043E\u0433\u0430\u0445</p>\n    </div>");
-};
 var temperaturaData = function temperaturaData(temp, iconUrl) {
   return "\n    <div class=\"temperature-card\">\n      <div class=\"temperature-item\">\n        <img src=\"".concat(iconUrl.dayIconUrl, "\" class=\"temperature-icon\" alt=\"day weather icon\" />\n        <span class=\"temperature-value\">+").concat(temp.dayTemp, "\xB0C</span>\n      </div>\n      <div class=\"temperature-item\">\n        <img src=\"").concat(iconUrl.nightIconUrl, "\" class=\"temperature-icon\" alt=\"night weather icon\" />\n        <span class=\"temperature-value\">+").concat(temp.nightTemp, "\xB0C</span>\n      </div>\n    </div>");
 };
 
 // ======== render data ========
 var RenderData = function RenderData(data, element) {
-  element.insertAdjacentHTML("afterbegin", data);
+  element.innerHTML = data;
 };
 
 // ============= api ==================
 var fetchNewsApi = /*#__PURE__*/function () {
   var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-    var res, text, parser, xmlDoc, items, i, title;
+    var res, response, html, index, maxIndex, _html;
     return _regeneratorRuntime().wrap(function _callee$(_context) {
       while (1) switch (_context.prev = _context.next) {
         case 0:
@@ -57,22 +45,32 @@ var fetchNewsApi = /*#__PURE__*/function () {
         case 2:
           res = _context.sent;
           _context.next = 5;
-          return res.text();
+          return res.json();
         case 5:
-          text = _context.sent;
-          parser = new DOMParser();
-          xmlDoc = parser.parseFromString(text, "application/xml"); // Access elements within the XML
-          items = xmlDoc.getElementsByTagName("item"); // Loop through the items and extract data
-          for (i = 0; i < items.length; i++) {
-            title = items[i].getElementsByTagName("title")[0].textContent;
-            console.log("Title:", title);
-          }
-
-          // console.log(data);
-
-          // const html = currencyData(data.slice(0, 3));
-          // RenderData(html, currencyWrapper);
+          response = _context.sent;
+          html = response[0].description;
+          RenderData(html, newsContent);
+          index = 0;
+          maxIndex = response.length;
         case 10:
+          if (!true) {
+            _context.next = 19;
+            break;
+          }
+          _context.next = 13;
+          return new Promise(function (resolve) {
+            return setTimeout(function () {
+              return resolve();
+            }, 8000);
+          });
+        case 13:
+          _html = response[index].description;
+          RenderData(_html, newsContent);
+          index++;
+          if (index == maxIndex) index = 0;
+          _context.next = 10;
+          break;
+        case 19:
         case "end":
           return _context.stop();
       }
@@ -159,21 +157,25 @@ var fetchAQIApi = /*#__PURE__*/function () {
   };
 }();
 
-// const fetchTrafficApi = async () => {
-//   try {
-//     const res = await fetch(trafficApi);
-//     const data = await res.json();
-//     const probka = data.probka;
-//     const html = trafficData(probka);
-//     RenderData(html, trafficWrapper);
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
-
 // =================================================================
 
 fetchAQIApi();
 fetchCurrenciesApi();
 fetchNewsApi();
-// fetchTrafficApi();
+setInterval(function () {
+  fetchAQIApi();
+}, 1000 * 60 * 60);
+setInterval(function () {
+  fetchNewsApi();
+}, 1000 * 60 * 26);
+function scheduleDailyUpdate() {
+  var now = new Date();
+  var nextMidnight = new Date();
+  nextMidnight.setHours(24, 0, 0, 0);
+  var timeUntilMidnight = nextMidnight - now;
+  setTimeout(function () {
+    fetchCurrenciesApi();
+    setInterval(fetchCurrenciesApi, 1000 * 60 * 60 * 24);
+  }, timeUntilMidnight);
+}
+scheduleDailyUpdate();
